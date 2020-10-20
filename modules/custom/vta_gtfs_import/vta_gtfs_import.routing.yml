@@ -1,0 +1,7 @@
+vta_gtfs_import.admin_form:
+  path: '/admin/content/gtfs-import'
+  defaults:
+    _form: '\Drupal\vta_gtfs_import\Form\GtfsImportAdminForm'
+    _title: 'VTA GTFS Import Administration Form'
+  requirements:
+    _permission: 'vta gtfs import form access'

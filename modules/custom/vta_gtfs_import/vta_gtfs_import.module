@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * @file
+ * Provides functionality for the VTA GTFS Import.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\user\Entity\User;
+
+/**
+ * Implements hook_form_FORM_ID_alter() for node_route_edit_form.
+ */
+function vta_gtfs_import_form_node_route_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $user = User::load(\Drupal::service('current_user')->id());
+
+  if ($user instanceof User) {
+    $disabled_fields = [
+      'field_route_id',
+    ];
+
+    if (!$user->hasPermission('vta gtfs import update imported node fields')) {
+      // Disable imported fields.
+      $disabled_fields = array_merge($disabled_fields, [
+        'title',
+        'field_route_short_name',
+        'field_route_long_name',
+        'body',
+        'field_route_category',
+        'field_extended_route_category',
+        'field_route_url',
+        'field_route_color',
+        'field_route_text_color',
+        'field_route_sort_order',
+      ]);
+    }
+
+    foreach ($disabled_fields as $disabled_field) {
+      $form[$disabled_field]['#disabled'] = TRUE;
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for node_station_edit_form.
+ */
+function vta_gtfs_import_form_node_station_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $user = User::load(\Drupal::service('current_user')->id());
+
+  if ($user instanceof User) {
+    $disabled_fields = [
+      'field_stop_id',
+    ];
+
+    if (!$user->hasPermission('vta update gtfs imported node fields')) {
+      // Disable imported fields.
+      $disabled_fields = array_merge($disabled_fields, [
+        'field_geolocation_single',
+        'field_geofield',
+        'field_station_address',
+        'body',
+        'field_related_routes',
+        'field_related_stops',
+      ]);
+    }
+
+    foreach ($disabled_fields as $disabled_field) {
+      $form[$disabled_field]['#disabled'] = TRUE;
+    }
+  }
+}

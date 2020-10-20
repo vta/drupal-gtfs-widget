@@ -1,0 +1,6 @@
+name: 'VTA GTFS Import'
+type: module
+description: 'Functionality for the VTA GTFS Import'
+core: 8.x
+package: VTA
+dependencies:

@@ -1,0 +1,8 @@
+{
+    "name": "echidnacorp/vta_route_schedule",
+    "description": "Functionality for the VTA Route Schedule.",
+    "type": "drupal-module",
+    "require": {
+        "mpdf/mpdf": "^7.1"
+    }
+}

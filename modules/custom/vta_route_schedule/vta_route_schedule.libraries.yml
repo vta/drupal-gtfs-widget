@@ -1,0 +1,18 @@
+vta_route_navigation:
+  js:
+    js/vta_route_navigation.js: {}
+  dependencies:
+    - core/jquery
+vta_route_schedule_general:
+  js:
+    js/vta_route_schedule_general.js: {}
+  dependencies:
+    - core/jquery
+vta_route_schedule_trip_planner:
+  js:
+    js/vta_route_schedule_trip_planner.js: {}
+  dependencies:
+    - core/jquery
+moment:
+  js:
+    /libraries/moment/min/moment.min.js: {}

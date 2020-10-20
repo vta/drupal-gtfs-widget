@@ -1,0 +1,1925 @@
+<?php
+
+/**
+ * @file
+ * Installation and update hooks for the vta_gtfs_import module.
+ */
+
+use Drupal\Core\Database\Database;
+use Drupal\node\Entity\Node;
+
+/**
+ * Implements hook_schema().
+ */
+function vta_gtfs_import_schema() {
+  /************************************************************
+   * GTFS Import tables
+   * - Stops
+   * - Trips
+   * - Stop Times
+   * - Calendar
+   * - Calendar Dates
+   * - Fare Attributes
+   * - Fare Rules
+   * - Shapes
+   * - Frequencies
+   * - Transfers
+   ************************************************************/
+  $schema = [];
+
+  /******************************
+   * Stops
+   ******************************/
+  $schema['gtfs_stops'] = [
+    'description' => "Individual locations where vehicles pick up or drop off passengers.",
+    'fields' => [
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop, station, or station entrance.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_code' => [
+        'description' => "The stop_code field contains short text or a number that uniquely identifies the stop for passengers.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_name' => [
+        'description' => "The stop_name field contains the name of a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_desc' => [
+        'description' => "The stop_desc field contains a description of a stop.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_lat' => [
+        'description' => "The stop_lat field contains the latitude of a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_lon' => [
+        'description' => "The stop_lon field contains the longitude of a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'zone_id' => [
+        'description' => "The zone_id field defines the fare zone for a stop ID.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'stop_url' => [
+        'description' => "The stop_url field contains the URL of a web page about a particular stop.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'location_type' => [
+        'description' => "The location_type field identifies whether this stop ID represents a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'parent_station' => [
+        'description' => "For stops that are physically located inside stations, the parent_station field identifies the station associated with the stop.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_timezone' => [
+        'description' => "The stop_timezone field contains the timezone in which this stop, station, or station entrance is located.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'wheelchair_boarding' => [
+        'description' => "The wheelchair_boarding field identifies whether wheelchair boardings are possible from the specified stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['stop_id'],
+  ];
+
+  /******************************
+   * Trips
+   ******************************/
+  $schema['gtfs_trips'] = [
+    'description' => "Trips for each route. A trip is a sequence of two or more stops that occurs at specific time.",
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field contains an ID that uniquely identifies a route. This value is referenced from the routes.txt file.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when service is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'trip_id' => [
+        'description' => "The trip_id field contains an ID that identifies a trip. The trip_id is dataset unique.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'trip_headsign' => [
+        'description' => "The trip_headsign field contains the text that appears on a sign that identifies the trip's destination to passengers.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'trip_short_name' => [
+        'description' => "The trip_short_name field contains the text that appears in schedules and sign boards to identify the trip to passengers.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'direction_id' => [
+        'description' => "The direction_id field contains a binary value that indicates the direction of travel for a trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'block_id' => [
+        'description' => "The block_id field identifies the block to which the trip belongs.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'shape_id' => [
+        'description' => "The shape_id field contains an ID that defines a shape for the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'wheelchair_accessible' => [
+        'description' => "The wheelchair_accessible field contains available accessibility information for the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'bikes_allowed' => [
+        'description' => "The bikes_allowed field contains available bike information for the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['trip_id'],
+  ];
+
+  /******************************
+   * Stop Times
+   ******************************/
+  $schema['gtfs_stop_times'] = [
+    'description' => "Times that a vehicle arrives at and departs from individual stops for each trip.",
+    'fields' => [
+      'trip_id' => [
+        'description' => "The trip_id field contains an ID that identifies a trip.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'arrival_time' => [
+        'description' => "The arrival_time specifies the arrival time at a specific stop for a specific trip on a route.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'departure_time' => [
+        'description' => "The departure_time specifies the departure time from a specific stop for a specific trip on a route.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_sequence' => [
+        'description' => "The stop_sequence field identifies the order of the stops for a particular trip.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_headsign' => [
+        'description' => "The stop_headsign field contains the text that appears on a sign that identifies the trip's destination to passengers.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'pickup_type' => [
+        'description' => "The pickup_type field indicates whether passengers are picked up at a stop as part of the normal schedule or whether a pickup at the stop is not available.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'drop_off_type' => [
+        'description' => "The drop_off_type field indicates whether passengers are dropped off at a stop as part of the normal schedule or whether a drop off at the stop is not available.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'shape_dist_traveled' => [
+        'description' => "When used in the stop_times.txt file, the shape_dist_traveled field positions a stop as a distance from the first shape point.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'timepoint' => [
+        'description' => "The timepoint field can be used to indicate if the specified arrival and departure times for a stop are strictly adhered to by the transit vehicle or if they are instead approximate and/or interpolated times.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['trip_id', 'stop_id'],
+  ];
+
+  /******************************
+   * Calendar
+   ******************************/
+  $schema['gtfs_calendar'] = [
+    'description' => "Dates for service IDs using a weekly schedule.",
+    'fields' => [
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when service is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ],
+      'day_availability' => [
+        'description' => "The day_availability field contains a binary value that indicates whether the service is valid for all days of the week.",
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+      ],
+      'start_date' => [
+        'description' => "The start_date field contains the start date for the service.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ],
+      'end_date' => [
+        'description' => "The end_date field contains the end date for the service.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary_key' => ['service_id'],
+  ];
+
+  /******************************
+   * Calendar Dates
+   ******************************/
+  $schema['gtfs_calendar_dates'] = [
+    'description' => "Exceptions for the service IDs defined in the calendar.txt file.",
+    'fields' => [
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when a service exception is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'date' => [
+        'description' => "The date field specifies a particular date when service availability is different than the norm.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ],
+      'exception_type' => [
+        'description' => "The exception_type indicates whether service is available on the date specified in the date field.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['service_id', 'date'],
+  ];
+
+  /******************************
+   * Fare Attributes
+   ******************************/
+  $schema['gtfs_fare_attributes'] = [
+    'description' => "Fare information for a transit organization's routes.",
+    'fields' => [
+      'fare_id' => [
+        'description' => "The fare_id field contains an ID that uniquely identifies a fare class.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'price' => [
+        'description' => "The price field contains the fare price, in the unit specified by currency_type.",
+        'type' => 'float',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'currency_type' => [
+        'description' => "The currency_type field defines the currency used to pay the fare.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'payment_method' => [
+        'description' => "The payment_method field indicates when the fare must be paid.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'transfers' => [
+        'description' => "The transfers field specifies the number of transfers permitted on this fare.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'transfer_duration' => [
+        'description' => "The transfer_duration field specifies the length of time in seconds before a transfer expires.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+    ],
+    'primary_key' => ['fare_id'],
+  ];
+
+  /******************************
+   * Fare Rules
+   ******************************/
+  $schema['gtfs_fare_rules'] = [
+    'description' => "Rules for applying fare information for a transit organization's routes.",
+    'fields' => [
+      'fare_id' => [
+        'description' => "The fare_id field contains an ID that uniquely identifies a fare class.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'route_id' => [
+        'description' => "The route_id field associates the fare ID with a route.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'origin_id' => [
+        'description' => "The origin_id field associates the fare ID with an origin zone ID.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'destination_id' => [
+        'description' => "The destination_id field associates the fare ID with a destination zone ID.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'contains_id' => [
+        'description' => "The contains_id field associates the fare ID with a zone ID, referenced from the stops.txt file.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+    ],
+    'primary_key' => ['fare_id', 'route_id'],
+  ];
+
+  /******************************
+   * Shapes
+   ******************************/
+  $schema['gtfs_shapes'] = [
+    'description' => "Rules for drawing lines on a map to represent a transit organization's routes.",
+    'fields' => [
+      'shape_id' => [
+        'description' => "The shape_id field contains an ID that uniquely identifies a shape.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_pt_lat' => [
+        'description' => "The shape_pt_lat field associates a shape point's latitude with a shape ID.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_pt_lon' => [
+        'description' => "The shape_pt_lon field associates a shape point's longitude with a shape ID.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_pt_sequence' => [
+        'description' => "The shape_pt_sequence field associates the latitude and longitude of a shape point with its sequence order along the shape..",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_dist_traveled' => [
+        'description' => "When used in the shapes.txt file, the shape_dist_traveled field positions a shape point as a distance traveled along a shape from the first shape point.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['shape_id'],
+  ];
+
+  /******************************
+   * Frequencies
+   ******************************/
+  $schema['gtfs_frequencies'] = [
+    'description' => "Headway (time between trips) for routes with variable frequency of service.",
+    'fields' => [
+      'trip_id' => [
+        'description' => "The trip_id contains an ID that identifies a trip on which the specified frequency of service applies.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'start_time' => [
+        'description' => "The start_time field specifies the time at which the first vehicle departs from the first stop of the trip with the specified frequency.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'end_time' => [
+        'description' => "The end_time field indicates the time at which service changes to a different frequency (or ceases) at the first stop in the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'headway_secs' => [
+        'description' => "The headway_secs field indicates the time between departures from the same stop (headway) for this trip type, during the time interval specified by start_time and end_time.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'exact_times' => [
+        'description' => "The exact_times field determines if frequency-based trips should be exactly scheduled based on the specified headway information.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['trip_id', 'start_time', 'end_time'],
+  ];
+
+  /******************************
+   * Transfers
+   ******************************/
+  $schema['gtfs_transfers'] = [
+    'description' => "Rules for making connections at transfer points between routes.",
+    'fields' => [
+      'from_stop_id' => [
+        'description' => "The from_stop_id field contains a stop ID that identifies a stop or station where a connection between routes begins.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'to_stop_id' => [
+        'description' => "The to_stop_id field contains a stop ID that identifies a stop or station where a connection between routes ends.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'transfer_type' => [
+        'description' => "The transfer_type field specifies the type of connection for the specified (from_stop_id, to_stop_id) pair.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'min_transfer_time' => [
+        'description' => "The min_transfer_time field defines the amount of time that must be available in an itinerary to permit a transfer between routes at these stops.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+    ],
+    'primary_key' => ['from_stop_id', 'to_stop_id'],
+  ];
+
+  /************************************************************
+   * GTFS Refined tables
+   * - Routes (ID - Name)
+   * - Routes (All)
+   * - Routes (Next Ride)
+   * - Stops (All)
+   * - Service Options
+   ************************************************************/
+
+  /************************************************************
+   * GTFS Refined table fields
+   ************************************************************/
+  $fields = [
+    'id' => [
+      'type' => 'varchar',
+      'length' => '32',
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'data' => [
+      'type' => 'blob',
+      'size' => 'big',
+      'not null' => TRUE,
+    ],
+    'created' => [
+      'type' => 'int',
+      'not null' => TRUE,
+    ],
+  ];
+
+  /******************************
+   * Routes
+   * - Route ID
+   * - Route Name
+   ******************************/
+  $schema['vta_routes_id_name'] = [
+    'description' => "Track Routes - Route ID and Route Name",
+    'fields' => $fields,
+  ];
+
+  /******************************
+   * Routes
+   * - All information
+   ******************************/
+  $schema['vta_routes_all'] = [
+    'description' => "Track Routes - All information",
+    'fields' => $fields,
+  ];
+
+  /******************************
+   * Routes
+   * - Next Ride
+   ******************************/
+  $schema['vta_routes_next_ride'] = [
+    'description' => "Track Routes - Next Ride",
+    'fields' => $fields,
+  ];
+
+  /******************************
+   * Stops
+   * - All information
+   ******************************/
+  $schema['vta_stops_all'] = [
+    'description' => "Track Stops - All information",
+    'fields' => $fields,
+  ];
+
+  /******************************
+   * Service Options
+   * - All information
+   ******************************/
+  $schema['vta_service_options'] = [
+    'description' => "Track Service Options - All information",
+    'fields' => $fields,
+  ];
+
+  return $schema;
+}
+
+/**
+ * Create the Upcoming versions of the GTFS import tables.
+ */
+function vta_gtfs_import_update_8701() {
+  /************************************************************
+   * GTFS Import tables (Upcoming)
+   * - Stops (Upcoming)
+   * - Trips (Upcoming)
+   * - Stop Times (Upcoming)
+   * - Calendar (Upcoming)
+   * - Calendar Dates (Upcoming)
+   * - Fare Attributes (Upcoming)
+   * - Fare Rules (Upcoming)
+   * - Shapes (Upcoming)
+   * - Frequencies (Upcoming)
+   * - Transfers (Upcoming)
+   ************************************************************/
+  $schemas = [];
+
+  /******************************
+   * Stops (Upcoming)
+   ******************************/
+  $schemas['gtfs_stops__upcoming'] = [
+    'description' => "Individual locations where vehicles pick up or drop off passengers.",
+    'fields' => [
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop, station, or station entrance.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_code' => [
+        'description' => "The stop_code field contains short text or a number that uniquely identifies the stop for passengers.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_name' => [
+        'description' => "The stop_name field contains the name of a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_desc' => [
+        'description' => "The stop_desc field contains a description of a stop.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_lat' => [
+        'description' => "The stop_lat field contains the latitude of a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_lon' => [
+        'description' => "The stop_lon field contains the longitude of a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'zone_id' => [
+        'description' => "The zone_id field defines the fare zone for a stop ID.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'stop_url' => [
+        'description' => "The stop_url field contains the URL of a web page about a particular stop.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'location_type' => [
+        'description' => "The location_type field identifies whether this stop ID represents a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'parent_station' => [
+        'description' => "For stops that are physically located inside stations, the parent_station field identifies the station associated with the stop.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_timezone' => [
+        'description' => "The stop_timezone field contains the timezone in which this stop, station, or station entrance is located.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'wheelchair_boarding' => [
+        'description' => "The wheelchair_boarding field identifies whether wheelchair boardings are possible from the specified stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['stop_id'],
+  ];
+
+  /******************************
+   * Trips (Upcoming)
+   ******************************/
+  $schemas['gtfs_trips__upcoming'] = [
+    'description' => "Trips for each route. A trip is a sequence of two or more stops that occurs at specific time.",
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field contains an ID that uniquely identifies a route. This value is referenced from the routes.txt file.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when service is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'trip_id' => [
+        'description' => "The trip_id field contains an ID that identifies a trip. The trip_id is dataset unique.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'trip_headsign' => [
+        'description' => "The trip_headsign field contains the text that appears on a sign that identifies the trip's destination to passengers.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'trip_short_name' => [
+        'description' => "The trip_short_name field contains the text that appears in schedules and sign boards to identify the trip to passengers.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'direction_id' => [
+        'description' => "The direction_id field contains a binary value that indicates the direction of travel for a trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'block_id' => [
+        'description' => "The block_id field identifies the block to which the trip belongs.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'shape_id' => [
+        'description' => "The shape_id field contains an ID that defines a shape for the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'wheelchair_accessible' => [
+        'description' => "The wheelchair_accessible field contains available accessibility information for the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'bikes_allowed' => [
+        'description' => "The bikes_allowed field contains available bike information for the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['trip_id'],
+  ];
+
+  /******************************
+   * Stop Times (Upcoming)
+   ******************************/
+  $schemas['gtfs_stop_times__upcoming'] = [
+    'description' => "Times that a vehicle arrives at and departs from individual stops for each trip.",
+    'fields' => [
+      'trip_id' => [
+        'description' => "The trip_id field contains an ID that identifies a trip.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'arrival_time' => [
+        'description' => "The arrival_time specifies the arrival time at a specific stop for a specific trip on a route.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'departure_time' => [
+        'description' => "The departure_time specifies the departure time from a specific stop for a specific trip on a route.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_sequence' => [
+        'description' => "The stop_sequence field identifies the order of the stops for a particular trip.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_headsign' => [
+        'description' => "The stop_headsign field contains the text that appears on a sign that identifies the trip's destination to passengers.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'pickup_type' => [
+        'description' => "The pickup_type field indicates whether passengers are picked up at a stop as part of the normal schedule or whether a pickup at the stop is not available.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'drop_off_type' => [
+        'description' => "The drop_off_type field indicates whether passengers are dropped off at a stop as part of the normal schedule or whether a drop off at the stop is not available.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'shape_dist_traveled' => [
+        'description' => "When used in the stop_times.txt file, the shape_dist_traveled field positions a stop as a distance from the first shape point.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'timepoint' => [
+        'description' => "The timepoint field can be used to indicate if the specified arrival and departure times for a stop are strictly adhered to by the transit vehicle or if they are instead approximate and/or interpolated times.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['trip_id', 'stop_id'],
+  ];
+
+  /******************************
+   * Calendar (Upcoming)
+   ******************************/
+  $schemas['gtfs_calendar__upcoming'] = [
+    'description' => "Dates for service IDs using a weekly schedule.",
+    'fields' => [
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when service is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ],
+      'day_availability' => [
+        'description' => "The day_availability field contains a binary value that indicates whether the service is valid for all days of the week.",
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+      ],
+      'start_date' => [
+        'description' => "The start_date field contains the start date for the service.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ],
+      'end_date' => [
+        'description' => "The end_date field contains the end date for the service.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary_key' => ['service_id'],
+  ];
+
+  /******************************
+   * Calendar Dates (Upcoming)
+   ******************************/
+  $schemas['gtfs_calendar_dates__upcoming'] = [
+    'description' => "Exceptions for the service IDs defined in the calendar.txt file.",
+    'fields' => [
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when a service exception is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'date' => [
+        'description' => "The date field specifies a particular date when service availability is different than the norm.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ],
+      'exception_type' => [
+        'description' => "The exception_type indicates whether service is available on the date specified in the date field.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['service_id', 'date'],
+  ];
+
+  /******************************
+   * Fare Attributes (Upcoming)
+   ******************************/
+  $schemas['gtfs_fare_attributes__upcoming'] = [
+    'description' => "Fare information for a transit organization's routes.",
+    'fields' => [
+      'fare_id' => [
+        'description' => "The fare_id field contains an ID that uniquely identifies a fare class.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'price' => [
+        'description' => "The price field contains the fare price, in the unit specified by currency_type.",
+        'type' => 'float',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'currency_type' => [
+        'description' => "The currency_type field defines the currency used to pay the fare.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'payment_method' => [
+        'description' => "The payment_method field indicates when the fare must be paid.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'transfers' => [
+        'description' => "The transfers field specifies the number of transfers permitted on this fare.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'transfer_duration' => [
+        'description' => "The transfer_duration field specifies the length of time in seconds before a transfer expires.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+    ],
+    'primary_key' => ['fare_id'],
+  ];
+
+  /******************************
+   * Fare Rules (Upcoming)
+   ******************************/
+  $schemas['gtfs_fare_rules__upcoming'] = [
+    'description' => "Rules for applying fare information for a transit organization's routes.",
+    'fields' => [
+      'fare_id' => [
+        'description' => "The fare_id field contains an ID that uniquely identifies a fare class.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'route_id' => [
+        'description' => "The route_id field associates the fare ID with a route.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'origin_id' => [
+        'description' => "The origin_id field associates the fare ID with an origin zone ID.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'destination_id' => [
+        'description' => "The destination_id field associates the fare ID with a destination zone ID.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'contains_id' => [
+        'description' => "The contains_id field associates the fare ID with a zone ID, referenced from the stops.txt file.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+    ],
+    'primary_key' => ['fare_id', 'route_id'],
+  ];
+
+  /******************************
+   * Shapes (Upcoming)
+   ******************************/
+  $schemas['gtfs_shapes__upcoming'] = [
+    'description' => "Rules for drawing lines on a map to represent a transit organization's routes.",
+    'fields' => [
+      'shape_id' => [
+        'description' => "The shape_id field contains an ID that uniquely identifies a shape.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_pt_lat' => [
+        'description' => "The shape_pt_lat field associates a shape point's latitude with a shape ID.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_pt_lon' => [
+        'description' => "The shape_pt_lon field associates a shape point's longitude with a shape ID.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_pt_sequence' => [
+        'description' => "The shape_pt_sequence field associates the latitude and longitude of a shape point with its sequence order along the shape..",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'shape_dist_traveled' => [
+        'description' => "When used in the shapes.txt file, the shape_dist_traveled field positions a shape point as a distance traveled along a shape from the first shape point.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['shape_id'],
+  ];
+
+  /******************************
+   * Frequencies (Upcoming)
+   ******************************/
+  $schemas['gtfs_frequencies__upcoming'] = [
+    'description' => "Headway (time between trips) for routes with variable frequency of service.",
+    'fields' => [
+      'trip_id' => [
+        'description' => "The trip_id contains an ID that identifies a trip on which the specified frequency of service applies.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'start_time' => [
+        'description' => "The start_time field specifies the time at which the first vehicle departs from the first stop of the trip with the specified frequency.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'end_time' => [
+        'description' => "The end_time field indicates the time at which service changes to a different frequency (or ceases) at the first stop in the trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'headway_secs' => [
+        'description' => "The headway_secs field indicates the time between departures from the same stop (headway) for this trip type, during the time interval specified by start_time and end_time.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'exact_times' => [
+        'description' => "The exact_times field determines if frequency-based trips should be exactly scheduled based on the specified headway information.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary_key' => ['trip_id', 'start_time', 'end_time'],
+  ];
+
+  /******************************
+   * Transfers (Upcoming)
+   ******************************/
+  $schemas['gtfs_transfers__upcoming'] = [
+    'description' => "Rules for making connections at transfer points between routes.",
+    'fields' => [
+      'from_stop_id' => [
+        'description' => "The from_stop_id field contains a stop ID that identifies a stop or station where a connection between routes begins.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'to_stop_id' => [
+        'description' => "The to_stop_id field contains a stop ID that identifies a stop or station where a connection between routes ends.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'transfer_type' => [
+        'description' => "The transfer_type field specifies the type of connection for the specified (from_stop_id, to_stop_id) pair.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'min_transfer_time' => [
+        'description' => "The min_transfer_time field defines the amount of time that must be available in an itinerary to permit a transfer between routes at these stops.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+    ],
+    'primary_key' => ['from_stop_id', 'to_stop_id'],
+  ];
+
+  /************************************************************
+   * GTFS Refined tables
+   * - Routes (ID - Name)
+   * - Routes (All)
+   * - Routes (Next Ride)
+   * - Stops (All)
+   * - Service Options
+   ************************************************************/
+
+  /************************************************************
+   * GTFS Refined table fields
+   ************************************************************/
+  $fields = [
+    'id' => [
+      'type' => 'varchar',
+      'length' => '32',
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'data' => [
+      'type' => 'blob',
+      'size' => 'big',
+      'not null' => TRUE,
+    ],
+    'created' => [
+      'type' => 'int',
+      'not null' => TRUE,
+    ],
+  ];
+
+  /******************************
+   * Routes
+   * - All information
+   ******************************/
+  $schemas['vta_routes_all__upcoming'] = [
+    'description' => "Track Routes - All information",
+    'fields' => $fields,
+  ];
+
+  /******************************
+   * Service Options
+   * - All information
+   ******************************/
+  $schemas['vta_service_options__upcoming'] = [
+    'description' => "Track Service Options - All information",
+    'fields' => $fields,
+  ];
+
+  /******************************
+   * Create the Tables
+   ******************************/
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db_schema->createTable($table_name, $schema);
+  }
+}
+
+/**
+ * Create the VTA GTFS Import Route Tracking database table.
+ */
+function vta_gtfs_import_update_8702() {
+  $schemas = [];
+
+  /******************************
+   * VTA GTFS Import Route Tracking
+   ******************************/
+  $schemas['vta_gtfs_import_route_tracking'] = [
+    'description' => "GTFS Import Route Tracking",
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'file' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'last_updated' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+  ];
+
+  /******************************
+   * Create the tables
+   ******************************/
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db_schema->createTable($table_name, $schema);
+  }
+}
+
+/**
+ * Update the route_id field on applicable VTA GTFS Import database tables.
+ */
+function vta_gtfs_import_update_8703() {
+  $schemas = [];
+
+  /******************************
+   * Trips
+   ******************************/
+  $schemas['gtfs_trips'] = [
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field contains an ID that uniquely identifies a route. This value is referenced from the routes.txt file.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Fare Rules
+   ******************************/
+  $schemas['gtfs_fare_rules'] = [
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field associates the fare ID with a route.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Trips (Upcoming)
+   ******************************/
+  $schemas['gtfs_trips__upcoming'] = [
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field contains an ID that uniquely identifies a route. This value is referenced from the routes.txt file.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Fare Rules (Upcoming)
+   ******************************/
+  $schemas['gtfs_fare_rules__upcoming'] = [
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field associates the fare ID with a route.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  $db = Database::getConnection('default', 'default');
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db->truncate($table_name)->execute();
+    foreach ($schema['fields'] as $field_key => $field) {
+      $db_schema->changeField($table_name, $field_key, $field_key, $field);
+    }
+  }
+
+  $nids = \Drupal::entityQuery('node')->condition('type', 'route')->execute();
+  $nodes = Node::loadMultiple($nids);
+  foreach ($nodes as $node) {
+    $route_short_name = $node->field_route_short_name->getValue();
+    $node->field_route_id->setValue($route_short_name);
+    $node->save();
+  }
+}
+
+/**
+ * Create the VTA GTFS Import Master Stop List database tables.
+ */
+function vta_gtfs_import_update_8704() {
+  $schemas = [];
+
+  /******************************
+   * VTA GTFS Import Master Stop List
+   ******************************/
+  $schemas['vta_gtfs_import_master_stop_list'] = [
+    'description' => "GTFS Import Master Stop List",
+    'fields' => [
+      'route_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_direction' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_sequence' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_type' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * VTA GTFS Import Master Stop List (Upcoming)
+   ******************************/
+  $schemas['vta_gtfs_import_master_stop_list__upcoming'] = [
+    'description' => "GTFS Import Master Stop List",
+    'fields' => [
+      'route_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_direction' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'stop_sequence' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'stop_type' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Create the table
+   ******************************/
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db_schema->createTable($table_name, $schema);
+  }
+}
+
+/**
+ * Create the VTA GTFS Import Route Mapping database tables.
+ */
+function vta_gtfs_import_update_8705() {
+  $schemas = [];
+
+  /******************************
+   * VTA GTFS Import Route Mapping
+   ******************************/
+  $schemas['vta_gtfs_import_route_mapping'] = [
+    'description' => "GTFS Import Route Mapping",
+    'fields' => [
+      'old_route_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'new_route_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * VTA GTFS Import Route Mapping (Upcoming)
+   ******************************/
+  $schemas['vta_gtfs_import_route_mapping__upcoming'] = [
+    'description' => "GTFS Import Route Mapping",
+    'fields' => [
+      'old_route_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'new_route_id' => [
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Create the table
+   ******************************/
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db_schema->createTable($table_name, $schema);
+  }
+}
+
+/**
+ * Update the stop_id field on applicable VTA GTFS Import database tables.
+ */
+function vta_gtfs_import_update_8706() {
+  $schemas = [];
+
+  /******************************
+   * Stops
+   ******************************/
+  $schemas['gtfs_stops'] = [
+    'fields' => [
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Stop Times
+   ******************************/
+  $schemas['gtfs_stop_times'] = [
+    'fields' => [
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Stops (Upcoming)
+   ******************************/
+  $schemas['gtfs_stops__upcoming'] = [
+    'fields' => [
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop, station, or station entrance.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Stop Times (Upcoming)
+   ******************************/
+  $schemas['gtfs_stop_times__upcoming'] = [
+    'fields' => [
+      'stop_id' => [
+        'description' => "The stop_id field contains an ID that uniquely identifies a stop.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  $db = Database::getConnection('default', 'default');
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db->truncate($table_name)->execute();
+    foreach ($schema['fields'] as $field_key => $field) {
+      $db_schema->changeField($table_name, $field_key, $field_key, $field);
+    }
+  }
+}
+
+/**
+ * Create new VTA GTFS Import database tables.
+ *
+ * Including (current and upcoming):
+ * - gtfs_calendar_attributes.
+ * - gtfs_directions.
+ * - gtfs_feed_info.
+ */
+function vta_gtfs_import_update_8801() {
+  /************************************************************
+   * GTFS Import tables
+   * - Calendar Attributes
+   * - Directions
+   * - Feed Info
+   ************************************************************/
+  $schemas = [];
+
+  /******************************
+   * Calendar Attributes
+   ******************************/
+  $schemas['gtfs_calendar_attributes'] = [
+    'description' => "Service information to map a service_id to a service description for each trip.",
+    'fields' => [
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when service is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ],
+      'service_description' => [
+        'description' => "The description associated with a service_id.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Directions
+   ******************************/
+  $schemas['gtfs_directions'] = [
+    'description' => "Direction information to map a direction_id to a direction for each route.",
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field contains an ID that uniquely identifies a route. This value is referenced from the routes.txt file.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'direction_id' => [
+        'description' => "The direction_id field contains a binary value that indicates the direction of travel for a trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'direction' => [
+        'description' => "The cardinal direction associated with the direction_id.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'direction_name' => [
+        'description' => "The direction name associated with the direction_id.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Feed Info
+   ******************************/
+  $schemas['gtfs_feed_info'] = [
+    'description' => "Dataset metadata, including publisher, version, and expiration information.",
+    'fields' => [
+      'feed_publisher_name' => [
+        'description' => "Full name of the organization that publishes the dataset.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'feed_publisher_url' => [
+        'description' => "URL of the dataset publishing organization's website.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'feed_lang' => [
+        'description' => "Default language for the text in this dataset.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'default_lang' => [
+        'description' => "Defines the language used when the data consumer doesn’t know the language of the rider.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'feed_start_date' => [
+        'description' => "The dataset provides complete and reliable schedule information for service in the period from the beginning of the feed_start_date day to the end of the feed_end_date day.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+      ],
+      'feed_end_date' => [
+        'description' => "Refer to the feed_start_date row in this table.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+      ],
+      'feed_version' => [
+        'description' => "String that indicates the current version of their GTFS dataset.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'feed_contact_email' => [
+        'description' => "Email address for communication regarding the GTFS dataset and data publishing practices.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'feed_contact_url' => [
+        'description' => "URL for contact information, a web-form, support desk, or other tools for communication regarding the GTFS dataset and data publishing practices.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /************************************************************
+   * GTFS Import tables (Upcoming)
+   * - Calendar Attributes (Upcoming)
+   * - Directions (Upcoming)
+   * - Feed Info (Upcoming)
+   ************************************************************/
+
+  /******************************
+   * Calendar Attributes (Upcoming)
+   ******************************/
+  $schemas['gtfs_calendar_attributes__upcoming'] = [
+    'description' => "Service information to map a service_id to a service description for each trip.",
+    'fields' => [
+      'service_id' => [
+        'description' => "The service_id contains an ID that uniquely identifies a set of dates when service is available for one or more routes.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ],
+      'service_description' => [
+        'description' => "The description associated with a service_id.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Directions (Upcoming)
+   ******************************/
+  $schemas['gtfs_directions__upcoming'] = [
+    'description' => "Direction information to map a direction_id to a direction for each route.",
+    'fields' => [
+      'route_id' => [
+        'description' => "The route_id field contains an ID that uniquely identifies a route. This value is referenced from the routes.txt file.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'direction_id' => [
+        'description' => "The direction_id field contains a binary value that indicates the direction of travel for a trip.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'direction' => [
+        'description' => "The cardinal direction associated with the direction_id.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'direction_name' => [
+        'description' => "The direction name associated with the direction_id.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Feed Info (Upcoming)
+   ******************************/
+  $schemas['gtfs_feed_info__upcoming'] = [
+    'description' => "Dataset metadata, including publisher, version, and expiration information.",
+    'fields' => [
+      'feed_publisher_name' => [
+        'description' => "Full name of the organization that publishes the dataset.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'feed_publisher_url' => [
+        'description' => "URL of the dataset publishing organization's website.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'feed_lang' => [
+        'description' => "Default language for the text in this dataset.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'default_lang' => [
+        'description' => "Defines the language used when the data consumer doesn’t know the language of the rider.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'feed_start_date' => [
+        'description' => "The dataset provides complete and reliable schedule information for service in the period from the beginning of the feed_start_date day to the end of the feed_end_date day.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+      ],
+      'feed_end_date' => [
+        'description' => "Refer to the feed_start_date row in this table.",
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+      ],
+      'feed_version' => [
+        'description' => "String that indicates the current version of their GTFS dataset.",
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'feed_contact_email' => [
+        'description' => "Email address for communication regarding the GTFS dataset and data publishing practices.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+      'feed_contact_url' => [
+        'description' => "URL for contact information, a web-form, support desk, or other tools for communication regarding the GTFS dataset and data publishing practices.",
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+  ];
+
+  /******************************
+   * Create the table
+   ******************************/
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db_schema->createTable($table_name, $schema);
+  }
+}
+
+/**
+ * Add new field to VTA GTFS Import Master Stop List database tables.
+ *
+ * New field:
+ * - timepoint_availability.
+ */
+function vta_gtfs_import_update_8802() {
+  $schemas = [];
+
+  /******************************
+   * VTA GTFS Import Master Stop List
+   ******************************/
+  $schemas['vta_gtfs_import_master_stop_list'] = [
+    'fields' => [
+      'timepoint_availability' => [
+        'description' => "The timepoint_availability field contains a binary value that indicates whether a stop is an available timepoint for different services.",
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+      ],
+    ],
+  ];
+
+  /******************************
+   * VTA GTFS Import Master Stop List (Upcoming)
+   ******************************/
+  $schemas['vta_gtfs_import_master_stop_list__upcoming'] = [
+    'fields' => [
+      'timepoint_availability' => [
+        'description' => "The timepoint_availability field contains a binary value that indicates whether a stop is an available timepoint for different services.",
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+      ],
+    ],
+  ];
+
+  $db = Database::getConnection('default', 'default');
+  $db_schema = Database::getConnection()->schema();
+  foreach ($schemas as $table_name => $schema) {
+    $db->truncate($table_name)->execute();
+    foreach ($schema['fields'] as $field_key => $field) {
+      $db_schema->addField($table_name, $field_key, $field);
+    }
+  }
+}

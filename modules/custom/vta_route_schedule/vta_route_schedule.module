@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * @file
+ * Provides functionality for the VTA Route Schedule.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_preprocess_block().
+ */
+function vta_route_schedule_preprocess_block(&$variables) {
+  $route_map_block_plugin_ids = [
+    'field_block:node:route:field_map' => [
+      'current' => TRUE,
+      'upcoming' => FALSE,
+    ],
+    'field_block:node:route:field_up_map' => [
+      'current' => FALSE,
+      'upcoming' => TRUE,
+    ],
+  ];
+
+  if (in_array($variables['plugin_id'], array_keys($route_map_block_plugin_ids))) {
+    $version = \Drupal::service('request_stack')->getCurrentRequest()->get('version');
+    $version = $version === 'upcoming' ? 'upcoming' : 'current';
+    $variables['display_block'] = $route_map_block_plugin_ids[$variables['plugin_id']][$version];
+  }
+}
+
+/**
+ * Implements hook_preprocess_field().
+ */
+function vta_route_schedule_preprocess_field(&$variables) {
+  if ($variables['field_name'] === 'field_route_status') {
+    $variables['route_status_markup'] = $variables['element']['#object']->field_route_status->view(['type' => 'list_default'])[0]['#markup'];
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for node_route_edit_form.
+ */
+function vta_route_schedule_form_node_route_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+  // Custom checkbox for deleting schedule PDF file.
+  $form['delete_pdf'] = [
+    '#type' => 'checkbox',
+    '#title' => new TranslatableMarkup('Remove Route Schedule PDF files'),
+    '#description' => new TranslatableMarkup('Checking this and saving will regenerate the Route Schedule PDF Files (current and upcoming)'),
+    '#default_value' => FALSE,
+    '#weight' => 100,
+  ];
+
+  // Prepend custom submit function to edit node form actions.
+  array_unshift($form['actions']['submit']['#submit'], 'vta_route_schedule_custom_submit');
+}
+
+/**
+ * Custom submit function for deleting Route schedule PDF file.
+ *
+ * @param array $form
+ *   Form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   Form state object.
+ */
+function vta_route_schedule_custom_submit(array &$form, FormStateInterface $form_state) {
+  $delete = $form_state->getValue('delete_pdf');
+  $node = \Drupal::service('current_route_match')->getParameter('node');
+  // If current node is a Route and checkbox for deleting schedule PDF file
+  // is checked, delete file on saving node.
+  if (
+    $node instanceof NodeInterface && $node->hasField('field_route_id') &&
+    !empty($node->field_route_id->value) &&
+    !empty($delete)
+  ) {
+    $route_schedule_pdf_versions = [
+      'current',
+      'upcoming',
+    ];
+    $route_id = $node->field_route_id->value;
+
+    foreach ($route_schedule_pdf_versions as $route_schedule_pdf_version) {
+      $directory = 'public://route_schedule_pdfs/' . $route_schedule_pdf_version . '/route_' . $route_id . '/';
+      $filename = 'route_' . $route_id . '_schedule.pdf';
+      $file_path = \Drupal::service('file_system')->realpath($directory . $filename);
+      if (file_exists($file_path)) {
+        unlink($file_path);
+      }
+    }
+  }
+}

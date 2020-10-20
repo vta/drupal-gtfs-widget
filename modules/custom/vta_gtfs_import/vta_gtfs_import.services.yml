@@ -1,0 +1,4 @@
+services:
+  vta_gtfs_import.manager:
+    class: Drupal\vta_gtfs_import\Services\VtaGtfsImportService
+    arguments: ['@queue', '@plugin.manager.queue_worker', '@config.factory', '@entity_type.manager', '@database', '@file_system', '@date.formatter', '@state', '@logger.factory', '@messenger']

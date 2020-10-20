@@ -1,0 +1,103 @@
+* {
+  font-family: 'Nunito Sans', Arial, sans-serif;
+}
+
+table,
+th,
+td {
+  border: 1px solid #7a7d81;
+  text-size-adjust: none;
+}
+
+table {
+  border-collapse: collapse;
+  /*overflow: wrap;*/
+  table-layout: fixed;
+  width: 100%;
+}
+
+th {
+  line-height: 1.3;
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  font-size: 13px;
+  padding-left: 4px;
+  padding-right: 4px;
+  /*word-break: break-all;*/
+  /*word-wrap: break-word;*/
+  width: auto;
+}
+
+tr:nth-child(even) {
+  background-color: #eff2f5;
+}
+
+td {
+  text-align: center;
+  line-height: 1.5;
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  font-size: 13px;
+}
+
+a {
+  display: none;
+}
+
+/*disclaimer*/
+.schedule-table-introduction-header-wrapper p {
+  display: none;
+}
+
+.schedule-table-introduction ,
+.route-header {
+  text-align: center;
+}
+
+/*Effective date*/
+.schedule-effective-date {
+  display: block;
+  font-size: 16px;
+  text-align: center;
+  margin: 0;
+  margin-top: -6px;
+}
+
+/*toggler*/
+.schedule-toggle-wrapper {
+  display: none;
+}
+
+/* Day Direction title */
+
+.route-direction h3 {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.route-direction a {
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/*Map*/
+img {
+  height: 110%;
+}
+
+/* Turn by turn title */
+.field--name-field-turn-by-turn-directions {
+  page-break-before: always;
+}
+
+.field--name-field-turn-by-turn-directions .field__label {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Turn by turn items */
+.field--name-field-turn-by-turn-directions .field__item {
+  width: 48%;
+  float: left;
+  padding-right: 6px;
+  font-size: 13px;
+}

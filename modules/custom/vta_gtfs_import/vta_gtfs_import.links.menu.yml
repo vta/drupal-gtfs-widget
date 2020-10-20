@@ -1,0 +1,6 @@
+vta_gtfs_import.admin_form:
+  title: 'VTA GTFS Import Administration'
+  parent: system.admin_content
+  route_name: vta_gtfs_import.admin_form
+  weight: 98
+  menu_name: system

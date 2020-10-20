@@ -1,0 +1,9 @@
+vta gtfs import form access:
+  title: 'Access to GTFS Import Administration Form'
+  description: 'Enables the specific role to access and execute GTFS import'
+  restrict access: true
+
+vta gtfs import update imported node fields:
+  title: 'Update node fields with GTFS imported content'
+  description: 'Allows users to update node fields with GTFS imported content (e.g. Routes and Stations).'
+  restrict access: true

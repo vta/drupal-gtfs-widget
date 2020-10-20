@@ -1,0 +1,8 @@
+{
+    "name": "echidnacorp/vta_gtfs_import",
+    "description": "Functionality for the VTA GTFS Import.",
+    "type": "drupal-module",
+    "require": {
+        "league/csv": "^8.2"
+    }
+}
