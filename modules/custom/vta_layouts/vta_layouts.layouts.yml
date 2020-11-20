@@ -1,0 +1,40 @@
+
+vta_layout_onecol:
+  label: 'VTA - One Column'
+  path: templates/layout
+  template: vta-layout--onecol
+  category: 'Columns: 1'
+  default_region: content
+  icon_map:
+    - [content]
+  regions:
+    content:
+      label: Content
+
+vta_layout_twocol_25_75:
+  label: 'VTA - Two Column 25/75'
+  path: templates/layout
+  template: vta-layout--twocol-25-75
+  category: 'Columns: 2'
+  default_region: second
+  icon_map:
+    - [first, second]
+  regions:
+    first:
+      label: First
+    second:
+      label: Second
+
+vta_layout_twocol_75_25:
+  label: 'VTA - Two Column 75/25'
+  path: templates/layout
+  template: vta-layout--twocol-75-25
+  category: 'Columns: 2'
+  default_region: first
+  icon_map:
+    - [first, second]
+  regions:
+    first:
+      label: First
+    second:
+      label: Second

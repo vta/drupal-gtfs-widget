@@ -422,7 +422,6 @@ class RouteScheduleBlock extends BlockBase implements ContainerFactoryPluginInte
         $build['#attached']['library'][] = 'vta_route_schedule/vta_route_schedule_trip_planner';
         $build['#attached']['drupalSettings'] = $trip_planner_settings;
       }
-      $build['#attached']['library'][] = 'vta_map/google_maps';
       $build['#attached']['drupalSettings']['lightbox_interactive'] = TRUE;
       $build['#attached']['drupalSettings']['route_shapes'] = $route['shapes'];
       $build['#attached']['drupalSettings']['route_color'] = $route['route_color'];
@@ -1057,8 +1056,15 @@ class RouteScheduleBlock extends BlockBase implements ContainerFactoryPluginInte
   protected function filterTrips(array $trips, array $services, array $effective_dates, string $version) {
     $service_interval_threshold = 5;
     $trips_to_unset = [];
+    $overall_trip_count = 0;
+    $closest_future_service_info = [
+      'date' => '',
+      'keys' => [],
+    ];
 
-    foreach ($services as $service) {
+    foreach ($services as $service_key => $service) {
+      $overall_trip_count += count($service['trips']);
+
       /******************************
        * Trip Rules to not be unset:
        * - General
@@ -1066,7 +1072,7 @@ class RouteScheduleBlock extends BlockBase implements ContainerFactoryPluginInte
        * - Current:
        * -- Today is included in service date range
        * - Upcoming:
-       * -- Service date range is within effective date range
+       * -- Service start date is within effective date range
        * -- Service starts before effective start date
        *    AND
        *    Service ends after effective start date
@@ -1075,12 +1081,14 @@ class RouteScheduleBlock extends BlockBase implements ContainerFactoryPluginInte
         !(
           $service['interval'] > $service_interval_threshold &&
           (
-            ($version === 'current' &&
+            (
+              $version === 'current' &&
               (
-                $service['start_date'] <= time() && time() <= $service['end_date']
+                ($service['start_date'] <= time() && time() <= $service['end_date'])
               )
             ) ||
-            ($version === 'upcoming' &&
+            (
+              $version === 'upcoming' &&
               (
                 ($effective_dates['start_date'] <= $service['start_date'] && $service['start_date'] <= $effective_dates['end_date']) ||
                 ($service['start_date'] <= $effective_dates['start_date'] && $effective_dates['start_date'] <= $service['end_date'])
@@ -1090,6 +1098,40 @@ class RouteScheduleBlock extends BlockBase implements ContainerFactoryPluginInte
         )
       ) {
         $trips_to_unset = array_merge($trips_to_unset, $service['trips']);
+
+        /******************************
+         * If there are no active services for current
+         * - Track future service(s) with the closest future date
+         * -- Ensure that they end up not being unset
+         ******************************/
+        if (
+          $version === 'current' &&
+          time() <= $service['start_date']
+        ) {
+          if (
+            (
+              empty($closest_future_service_info['date']) &&
+              empty($closest_future_service_info['keys'])
+            ) ||
+            $service['start_date'] < $closest_future_service_info['date']
+          ) {
+            $closest_future_service_info['date'] = $service['start_date'];
+            $closest_future_service_info['keys'] = [$service_key];
+          }
+          elseif ($service['start_date'] === $closest_future_service_info['date']) {
+            $closest_future_service_info['keys'][] = $service_key;
+          }
+        }
+      }
+    }
+
+    if ($overall_trip_count === count($trips_to_unset)) {
+      foreach ($closest_future_service_info['keys'] as $closest_future_service_key) {
+        foreach ($services[$closest_future_service_key]['trips'] as $trip_id) {
+          if ($trip_id_key = array_search($trip_id, $trips_to_unset)) {
+            unset($trips_to_unset[$trip_id_key]);
+          }
+        }
       }
     }
 

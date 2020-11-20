@@ -1,0 +1,355 @@
+uuid: a6c2d3bb-584a-4d29-a263-5f25c5c06deb
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.route.body
+    - field.field.node.route.field_extended_route_category
+    - field.field.node.route.field_map
+    - field.field.node.route.field_partner_logo
+    - field.field.node.route.field_route_category
+    - field.field.node.route.field_route_color
+    - field.field.node.route.field_route_id
+    - field.field.node.route.field_route_long_name
+    - field.field.node.route.field_route_related_routes
+    - field.field.node.route.field_route_short_name
+    - field.field.node.route.field_route_sort_order
+    - field.field.node.route.field_route_status
+    - field.field.node.route.field_route_text_color
+    - field.field.node.route.field_route_url
+    - field.field.node.route.field_turn_by_turn_directions
+    - field.field.node.route.field_up_map
+    - field.field.node.route.field_up_turn_by_turn_directions
+    - node.type.route
+  module:
+    - ctools
+    - layout_builder
+    - layout_builder_restrictions
+    - layout_discovery
+    - options
+    - text
+    - user
+    - vta_faq
+    - vta_route_schedule
+third_party_settings:
+  layout_builder:
+    allow_custom: false
+    enabled: true
+    sections:
+      -
+        layout_id: layout_twocol
+        layout_settings:
+          label: ''
+        components:
+          8aee012f-d738-4ce7-b04b-553cb1aac044:
+            uuid: 8aee012f-d738-4ce7-b04b-553cb1aac044
+            region: first
+            configuration:
+              id: 'field_block:node:route:title'
+              label: Title
+              provider: layout_builder
+              label_display: '0'
+              formatter:
+                label: hidden
+                type: string
+                settings:
+                  link_to_entity: false
+                third_party_settings: {  }
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 5
+          3d07bf24-9206-4181-8734-3acdead65110:
+            uuid: 3d07bf24-9206-4181-8734-3acdead65110
+            region: bottom
+            configuration:
+              label_display: '0'
+              context_mapping:
+                entity: layout_builder.entity
+              id: 'field_block:node:route:body'
+              formatter:
+                label: hidden
+                type: text_default
+                settings: {  }
+                third_party_settings: {  }
+            additional: {  }
+            weight: 0
+          640ee627-fb86-414d-8184-7bacae227b65:
+            uuid: 640ee627-fb86-414d-8184-7bacae227b65
+            region: bottom
+            configuration:
+              id: route_schedule
+              label: 'Route Schedule'
+              provider: vta_route_schedule
+              label_display: '0'
+              context_mapping: {  }
+            additional: {  }
+            weight: 3
+          1f5c0a56-ef95-4389-901f-2daebce8cda4:
+            uuid: 1f5c0a56-ef95-4389-901f-2daebce8cda4
+            region: bottom
+            configuration:
+              id: faq_related_content
+              label: 'Frequently Asked Questions'
+              provider: vta_faq
+              label_display: visible
+              context_mapping: {  }
+            additional: {  }
+            weight: 5
+          c1015f36-c520-4307-9900-fde16a9262c3:
+            uuid: c1015f36-c520-4307-9900-fde16a9262c3
+            region: first
+            configuration:
+              id: 'field_block:node:route:field_map'
+              label: 'View Map'
+              provider: layout_builder
+              label_display: visible
+              formatter:
+                label: hidden
+                type: entity_reference_entity_view
+                settings:
+                  view_mode: lightbox
+                third_party_settings: {  }
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 6
+          b60611db-7cb3-4642-98c5-f4f0d655c753:
+            uuid: b60611db-7cb3-4642-98c5-f4f0d655c753
+            region: first
+            configuration:
+              id: 'field_block:node:route:field_up_map'
+              label: 'View Map'
+              provider: layout_builder
+              label_display: visible
+              formatter:
+                label: hidden
+                type: entity_reference_entity_view
+                settings:
+                  view_mode: lightbox
+                third_party_settings: {  }
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 7
+          8f15fd43-be2c-4881-82bd-837b6a4eb976:
+            uuid: 8f15fd43-be2c-4881-82bd-837b6a4eb976
+            region: first
+            configuration:
+              id: 'entity_view:node'
+              label: 'Route ID'
+              provider: ctools
+              label_display: '0'
+              view_mode: related_reference
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 2
+          210a378d-e282-4a1c-9af4-0ae5a26b916b:
+            uuid: 210a378d-e282-4a1c-9af4-0ae5a26b916b
+            region: bottom
+            configuration:
+              id: 'field_block:node:route:field_partner_logo'
+              label: 'Funding for this route is provided by'
+              provider: layout_builder
+              label_display: visible
+              formatter:
+                label: hidden
+                type: entity_reference_entity_view
+                settings:
+                  view_mode: logo
+                third_party_settings: {  }
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 4
+          4fb55f9c-1cf1-488c-8989-2dfbd182ef86:
+            uuid: 4fb55f9c-1cf1-488c-8989-2dfbd182ef86
+            region: first
+            configuration:
+              id: 'field_block:node:route:field_route_status'
+              label: 'Route Status'
+              provider: layout_builder
+              label_display: '0'
+              formatter:
+                label: hidden
+                type: list_key
+                settings: {  }
+                third_party_settings: {  }
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 4
+          54a51d7a-1d31-4cdf-943e-f11794875ac8:
+            uuid: 54a51d7a-1d31-4cdf-943e-f11794875ac8
+            region: first
+            configuration:
+              id: 'field_block:node:route:field_route_related_routes'
+              label: 'Related Routes'
+              provider: layout_builder
+              label_display: '0'
+              formatter:
+                label: hidden
+                type: entity_reference_entity_view
+                settings:
+                  view_mode: default
+                third_party_settings: {  }
+              context_mapping:
+                entity: layout_builder.entity
+            additional: {  }
+            weight: 8
+        third_party_settings: {  }
+  layout_builder_restrictions:
+    allowed_blocks:
+      Accessibility: {  }
+      AddToAny: {  }
+      'Chaos Tools':
+        - 'entity_view:node'
+      core: {  }
+      Custom: {  }
+      Devel: {  }
+      Disqus: {  }
+      Facets: {  }
+      Forms: {  }
+      'Inline blocks':
+        - 'inline_block:basic'
+      'Lists (Views)':
+        - 'views_block:service_alerts-block_route'
+      Menus: {  }
+      'Purge UI': {  }
+      'SimpleSAMLphp Authentication': {  }
+      'Social Media Links Block': {  }
+      System: {  }
+      User: {  }
+      'User fields': {  }
+      Views: {  }
+      'VTA FAQ':
+        - faq_related_content
+      'VTA Map': {  }
+      'VTA Personalization':
+        - vta_myvta_subscribe_block
+      'VTA Route Schedule':
+        - route_schedule
+      'VTA Solicitation': {  }
+      Webform: {  }
+      'Workbench Access': {  }
+    allowed_layouts:
+      - layout_onecol
+      - layout_twocol_section
+      - vta_layout_twocol_25_75
+      - vta_layout_twocol_75_25
+id: node.route.default
+targetEntityType: node
+bundle: route
+mode: default
+content:
+  body:
+    label: hidden
+    type: text_default
+    weight: 2
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+  field_extended_route_category:
+    weight: 10
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: first
+  field_map:
+    weight: 3
+    label: hidden
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+    type: entity_reference_entity_view
+    region: content
+  field_partner_logo:
+    type: entity_reference_entity_view
+    weight: 8
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+    region: first
+  field_route_category:
+    type: entity_reference_entity_view
+    weight: 0
+    region: content
+    label: hidden
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+  field_route_id:
+    weight: 6
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: first
+  field_route_related_routes:
+    weight: 11
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: first
+  field_route_sort_order:
+    weight: 4
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: first
+  field_route_status:
+    weight: 5
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: first
+  field_turn_by_turn_directions:
+    weight: 7
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: text_default
+    region: first
+  field_up_map:
+    type: entity_reference_entity_view
+    weight: 9
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+    region: first
+  field_up_turn_by_turn_directions:
+    weight: 8
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: text_default
+    region: first
+  flag_favorite:
+    weight: 10
+    settings: {  }
+    third_party_settings: {  }
+    region: first
+hidden:
+  addtoany: true
+  field_route_color: true
+  field_route_long_name: true
+  field_route_short_name: true
+  field_route_text_color: true
+  field_route_url: true
+  links: true
+  search_api_excerpt: true
